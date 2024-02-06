@@ -21,8 +21,12 @@ This is a bot that can be integrated with [VKTeams Messenger](https://teams.vk.c
 3. Also, you must define some environment variables in your myteam-alertmanager-bot installation.
 - Define `API_URL_BASE` variable
 - Define `BOT_NAME` variable
-- Define default `CHAT_ID` variable
-- If you would like to use a few chats to send alerts, define extra chat ids using the variable like this one `CHAT_ID_<ALERTMANAGER_RECEIVER_NAME>`. `<ALERTMANAGER_RECEIVER_NAME>` must match receiver name in your alertmanager config and be upper-case, `-` replaced with `_`.
+- Define default `default_chat_id` variable , if chat ID is not installed then use default (chatid to set query params to sent service ) examples:
+
+```
+http://localhost:8080/api/v1/push?chat_id=YOU_CHAT_ID
+```  
+  
 - Define `API_TOKEN` variable
 
 4. Quick start and test:
@@ -31,13 +35,50 @@ This is a bot that can be integrated with [VKTeams Messenger](https://teams.vk.c
 export API_URL_BASE="https://api.vkteams.example.com/bot/v1/"
 export BOT_NAME="<bot_name>"
 export API_TOKEN="<bot_token>"
-export CHAT_ID="<default_chat_id>"
-export CHAT_ID_VKTEAMS_FOO_ALERTS="<chat_id_1>"
-export CHAT_ID_VKTEAMS_BAR_ALERTS="<chat_id_2>"
-cd app/
-python3 manager.py
+export default_chat_id="<default_chat_id>"
 
-curl localhost:8080/api/v1/push -X POST -d '{"receiver": "vkteams-foo-alerts", "status": "firing", "alerts": [{"status": "firing", "labels": {"alertgroup": "test", "alertname": "test", "instance": "test", "job": "node-exporter", "prometheus": "monitoring-system/vmagent", "severity": "info"}, "annotations": {"instance": "test", "reference": "", "summary": "test", "value": "test"}, "startsAt": "2022-06-29T11:34:26.055376888Z", "endsAt": "0001-01-01T00:00:00Z", "generatorURL": "http://vmalert-vmalert-7b4dc58787-jzfvn:8080/api/v1/10784142485096446030/2135157705199415880/status", "fingerprint": "767a027249c67bd4"}], "groupLabels": {"alertname": "test"}, "commonLabels": {"alertgroup": "test", "alertname": "test", "instance": "test", "job": "node-exporter", "prometheus": "monitoring-system/vmagent", "severity": "info"}, "commonAnnotations": {"instance": "test", "reference": "", "summary": "test", "value": "test"}}' -H 'Content-Type: application/json' -v
+cd app/
+python3 manager.py &
+
+curl -X POST -H "Content-Type: application/json" -d '{
+  "status": "firing",
+  "receiver": "example_receiver",
+  "commonLabels": {
+    "severity": "critical"
+  },
+  "commonAnnotations": {
+    "summary": "Test alert",
+    "description": "This is a test alert",
+    "runbook": "Just do it, thats why manual", 
+    "dashboard": "https://dashboard_you"
+  },
+  "alerts": [
+    {
+      "status": "firing",
+      "labels": {
+        "severity": "critical"
+      },
+      "annotations": {
+        "summary": "Instance 1",
+        "instance": "Server 1",
+        "value": "100"
+      }
+    },
+    {
+      "status": "firing",
+      "labels": {
+        "severity": "warning"
+      },
+      "annotations": {
+        "summary": "Instance 2",
+        "instance": "Server 2",
+        "value": "50",
+        "runbook": "Just do it, thats why manual",
+        "dashboard": "https://dashboard_you"
+      }
+    }
+  ]
+}' "http://localhost:8080/api/v1/push?chat_id=$CHAT_ID"
 ```
 5. To make it all works using alertmanager, you have to define a `webhook_config` in your alertmanager installation.
 ```yaml
@@ -86,7 +127,7 @@ receivers:
         http_config:
           follow_redirects: true
           enable_http2: true
-        url: http://myteam-alertmanager-bot.example.com:8080/api/v1/push
+        url: http://myteam-alertmanager-bot.example.com:8080/api/v1/push?chat_id=$CHAT_ID
         max_alerts: 0
   - name: vkteams-bar-alerts
     webhook_configs:
@@ -94,7 +135,7 @@ receivers:
         http_config:
           follow_redirects: true
           enable_http2: true
-        url: http://myteam-alertmanager-bot.example.com:8080/api/v1/push
+        url: http://myteam-alertmanager-bot.example.com:8080/api/v1/push?chat_id=$CHAT_ID
         max_alerts: 0
 templates:
   - /etc/vm/configs/**/*.tmpl

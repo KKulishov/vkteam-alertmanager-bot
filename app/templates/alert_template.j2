@@ -6,22 +6,27 @@ Status: <b>{{ status | upper }}</b> ✅
 {%- endif %}
 {%- if common_labels is defined and common_labels %}
 {%- set severity = common_labels.severity %}
-Priority: {% if severity | upper == 'CRITICAL' or severity | upper == 'ERROR' %}<b>{{ severity | upper }}</b> ❗️{% elif severity == "WARNING" %}<b>{{ severity | upper }}</b> ⚠️{% else %}<b>{{ severity | upper }}</b> ℹ️{% endif %}
+Priority: {% if severity | upper == 'CRITICAL' or severity | upper == 'ERROR' %}<b>{{ severity | upper }}</b> ❗{% elif severity | upper == "INFO" %}<b>{{ severity | upper }}</b> ℹ️{% elif severity | upper == "WARNING" %}<b>{{ severity | upper }}</b> ⚠️{% else %}<b>{{ severiy | upper }}</b> ℹ️{% endif %}
 {%- endif %}
-{%- if common_annotations.summary is defined and common_annotations.summary %}
-{%- set summary = common_annotations.summary | replace('<', '&lt;') | replace('>', '&gt;') %}
-Summary: <b>{{ summary }}</b>
+{%- if common_annotations.runbook is defined and common_annotations.runbook %}
+{%- set runbook = common_annotations.runbook | replace('<', '&lt;') | replace('>', '&gt;') %}
+Runbook: <b>{{ runbook }}</b>
 {%- else %}
-{%- set summary = alerts[0].annotations.summary | replace('<', '&lt;') | replace('>', '&gt;') %}
-Summary: <b>{{ summary }}</b>
+{%- set runbook = alerts[0].annotations.runbook | replace('<', '&lt;') | replace('>', '&gt;') %}
+runbook: <b>{{ runbook }}</b>
+{%- endif %}
+{%- if common_annotations.dashboard is defined and common_annotations.dashboard %}
+{%- set dashboard = common_annotations.dashboard | replace('<', '&lt;') | replace('>', '&gt;') %}
+dashboard: <b>{{ dashboard }}</b>
+{%- else %}
+{%- set dashboard = alerts[0].annotations.dashboard | replace('<', '&lt;') | replace('>', '&gt;') %}
+dashboard: <b>{{ dashboard }}</b>
 {%- endif %}
 {%- if common_annotations.description %}
 {%- set description = common_annotations.description | replace('<', '&lt;') | replace('>', '&gt;') %}
 Description: <b>{{ description }}</b>
 {%- endif %}
-Instances:
-{%- for alert in alerts %}
-{%- set instance = alert.annotations.instance | replace('<', '&lt;') | replace('>', '&gt;') %}
-{%- set value = alert.annotations.value | replace('<', '&lt;') | replace('>', '&gt;') %}
-- {% if instance is defined and instance %}{{ instance }}{% else %}None{% endif %}: {% if value is defined and value %}{{ value }}{% else %}None{% endif %}
-{%- endfor %}
+{%- if common_labels.cluster is defined and common_labels.cluster %}
+{%- set cluster = common_labels.cluster | replace('<', '&lt;') | replace('>', '&gt;') %}
+Cluster: <b>{{ cluster }}</b>
+{%- endif %}

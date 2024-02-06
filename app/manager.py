@@ -88,7 +88,7 @@ async def push_alert(request):
           chat_receiver = json_request["receiver"].upper()
           chat_receiver = chat_receiver.replace("-","_")
           
-          chat_id = request.query.get("chat_id", envs['chat_id'])
+          chat_id = request.query.get("chat_id", envs.get('chat_id', 'default_chat_id'))
 
           send_message = bot.send_text(chat_id=chat_id, parse_mode=envs['parse_mode'], text=alert_msg)
           status = send_message.status_code
