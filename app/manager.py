@@ -87,8 +87,8 @@ async def push_alert(request):
 
           chat_receiver = json_request["receiver"].upper()
           chat_receiver = chat_receiver.replace("-","_")
-
-          chat_id = os.getenv("CHAT_ID_" + chat_receiver, envs['chat_id'])
+          
+          chat_id = request.query.get("chat_id", envs['chat_id'])
 
           send_message = bot.send_text(chat_id=chat_id, parse_mode=envs['parse_mode'], text=alert_msg)
           status = send_message.status_code
@@ -147,7 +147,6 @@ parser.add_argument("--log-level", type=str, help='specify a log level')
 parser.add_argument("--api-url-base", type=str, help="specify an api endpoint")
 parser.add_argument("--api-token", type=str, help="specify an api token")
 parser.add_argument("--bot-name", type=str, help="specify a bot name")
-parser.add_argument("--chat-id", type=str, help="specify a nick, stamp or chat_id")
 parser.add_argument("--parse-mode", type=str, help="specify a text format")
 args = parser.parse_args()
 
@@ -156,7 +155,6 @@ envs = {
   "api_url_base": os.getenv('API_URL_BASE', args.api_url_base),
   "api_token": os.getenv('API_TOKEN', args.api_token),
   "bot_name": os.getenv('BOT_NAME', args.bot_name),
-  "chat_id": os.getenv('CHAT_ID', args.chat_id),
   "parse_mode": args.parse_mode or "HTML"
 }
 
