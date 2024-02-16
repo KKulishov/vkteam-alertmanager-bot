@@ -23,6 +23,11 @@ This is a bot that can be integrated with [VKTeams Messenger](https://teams.vk.c
 - Define `BOT_NAME` variable
 - Define default `default_chat_id` variable , if chat ID is not installed then use default (chatid to set query params to sent service ) examples:
 
+- Define `CHECK_ALERTMANAGER` variable , check alertmanager , in default set false. If you set true , Alertmanager send to route /heartbeat
+- Define `ALERTMANAGER_NAME` variable , set you name ALERTMANAGE in cluster
+- Define `time_interval_check_alert`  variable ,  time interval check last send alertmanager message , default 30 seconds
+- Define `time_how_long_not_to_send`  variable ,  time interval check how long not to send alert , default 300 seconds
+
 ```
 http://localhost:8080/api/v1/push?chat_id=YOU_CHAT_ID
 ```  
@@ -139,4 +144,35 @@ receivers:
         max_alerts: 0
 templates:
   - /etc/vm/configs/**/*.tmpl
+```
+
+if you want check sent alertmanager. to alert rule:
+
+```yaml
+- name: heartbeat
+  rules:
+    - alert: heartbeat
+      expr: vector(1)
+      labels:
+        severity: none
+      annotations:
+        description: This is heartbeat alert
+        summary: Alerting Dead mens  
+        dashboard: "ToDo"
+        runbook: "https://blog.ediri.io/how-to-set-up-a-dead-mans-switch-in-prometheus"
+```
+
+add config alertmanager this example :
+```yaml
+routes:
+  - receiver: 'heartbeat'
+    match:
+      alertname: 'heartbeat'
+    group_wait: 10s
+    group_interval: 1m
+    repeat_interval: 2m  
+receivers:
+- name: 'heartbeat'
+  webhook_configs:
+  - url: 'http://myteam-alertmanager-bot.example.com.monitoring.svc.cluster.local:8080/heartbeat'    
 ```

@@ -5,12 +5,16 @@ import sys
 import json
 import logging
 import jsonschema
+import multiprocessing
 from aiohttp import web
 from bot.bot import Bot
 from jinja2 import Template
 from traceback import format_exc
 from argparse import ArgumentParser
 from pythonjsonlogger import jsonlogger
+import src 
+
+CHECK_ALERTMANAGER=os.getenv('CHECK_ALERTMANAGER', "false").lower()
 
 def set_log_level(level):
     if level == 'INFO' or level == 'info':
@@ -177,8 +181,13 @@ bot = Bot(api_url_base=envs['api_url_base'], name=envs['bot_name'], token=envs['
 app = web.Application()
 app.add_routes([
     web.post('/api/v1/push', push_alert),
-    web.get('/health', healthcheck)
+    web.get('/health', healthcheck),
+    web.post('/heartbeat', src.heartbeat)
   ])
 
 if __name__ == '__main__':
-    web.run_app(app)
+  if CHECK_ALERTMANAGER == "true":
+    p = multiprocessing.Process(target=src.check_alertmanager_heartbeat)
+    p.start()
+  web.run_app(app)
+
