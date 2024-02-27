@@ -193,3 +193,17 @@ receivers:
 ```
 curl http://127.0.0.1:8080/metrics
 ```
+
+```
+# TYPE aiohttp_http_requests_total counter
+aiohttp_http_requests_total
+
+# TYPE aiohttp_http_request_duration_seconds histogram
+aiohttp_http_request_duration_seconds_bucket
+
+# TYPE aiohttp_http_request_duration_seconds_created gauge
+aiohttp_http_request_duration_seconds_created
+
+```
+
+dashbord for grafana ./grafana/dashboard_aiohttp.json
