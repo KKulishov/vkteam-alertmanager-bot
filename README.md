@@ -23,10 +23,22 @@ This is a bot that can be integrated with [VKTeams Messenger](https://teams.vk.c
 - Define `BOT_NAME` variable
 - Define default `default_chat_id` variable , if chat ID is not installed then use default (chatid to set query params to sent service ) examples:
 
+
+4. If you need check  work ALERTMANAGER. Please set  variable. 
 - Define `CHECK_ALERTMANAGER` variable , check alertmanager , in default set false. If you set true , Alertmanager send to route /heartbeat
 - Define `ALERTMANAGER_NAME` variable , set you name ALERTMANAGE in cluster
 - Define `time_interval_check_alert`  variable ,  time interval check last send alertmanager message , default 30 seconds
 - Define `time_how_long_not_to_send`  variable ,  time interval check how long not to send alert , default 300 seconds
+
+example description how to check ALERTMANAGER:
+[habr](https://habr.com/ru/companies/otus/articles/654867/)
+[ediri](https://blog.ediri.io/how-to-set-up-a-dead-mans-switch-in-prometheus)
+
+5. If you need many replics alertmaanager bot , you need on redis. Please set  variable.
+- Define `redis_status` variable , set 'on'
+- Define `HOST_REDIS` variable, set you host redis 
+- Define `PORT_REDIS` variable, set you port redis, default 6379 
+- Define `REDIS_PASS` variable, set you password redis 
 
 ```
 http://localhost:8080/api/v1/push?chat_id=YOU_CHAT_ID
@@ -34,7 +46,7 @@ http://localhost:8080/api/v1/push?chat_id=YOU_CHAT_ID
   
 - Define `API_TOKEN` variable
 
-4. Quick start and test:
+6. Quick start and test:
 
 ```bash
 export API_URL_BASE="https://api.vkteams.example.com/bot/v1/"
@@ -85,7 +97,7 @@ curl -X POST -H "Content-Type: application/json" -d '{
   ]
 }' "http://localhost:8080/api/v1/push?chat_id=$CHAT_ID"
 ```
-5. To make it all works using alertmanager, you have to define a `webhook_config` in your alertmanager installation.
+7. To make it all works using alertmanager, you have to define a `webhook_config` in your alertmanager installation.
 ```yaml
 # alertmanager example config
 global:
@@ -175,4 +187,9 @@ receivers:
 - name: 'heartbeat'
   webhook_configs:
   - url: 'http://myteam-alertmanager-bot.example.com.monitoring.svc.cluster.local:8080/heartbeat'    
+```
+
+8. Add metrics prometheus format. Route /metrics
+```
+curl http://127.0.0.1:8080/metrics
 ```
