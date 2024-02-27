@@ -9,6 +9,7 @@ from bot.bot import Bot
 from argparse import ArgumentParser
 from pythonjsonlogger import jsonlogger
 from traceback import format_exc
+from src.redis_connect import write_to_redis, read_from_redis
 
 parser = ArgumentParser()
 parser.add_argument("--log-level", type=str, help='specify a log level')
@@ -28,6 +29,7 @@ envs = {
   "parse_mode": args.parse_mode or "HTML"
 }
 
+redis_status=os.getenv('redis_status', "off").lower()
 last_successful_alertmanager_request_time = multiprocessing.Value('i', 0)
 time_interval_check_alert=int(os.getenv('time_interval_check_alert', 60))
 time_how_long_not_to_send=int(os.getenv('time_how_long_not_to_send', 300))
@@ -53,6 +55,13 @@ logHandler.setFormatter(formatter)
 logger.addHandler(logHandler)
 
 async def heartbeat(request):
+  if redis_status == "on":
+    time_heartbeat = int(time.time())
+    write_redis = write_to_redis("time_last_heartbeat", time_heartbeat)
+    msg = f"heartbeat check is push time to redis {time_heartbeat}"
+    logger.info(msg)
+    return web.Response(text=msg)
+  else:  
     global last_successful_alertmanager_request_time
     with last_successful_alertmanager_request_time.get_lock():
         last_successful_alertmanager_request_time.value = int(time.time())
@@ -64,18 +73,43 @@ def check_alertmanager_heartbeat():
   time.sleep(60)
   global last_successful_alertmanager_request_time
   while True:
-    current_time = time.time()
-    time_since_last_request = current_time - last_successful_alertmanager_request_time.value
-    if time_since_last_request > time_how_long_not_to_send:
-      chat_id = envs.get('default_chat_id')
-      ALERTMANAGER_NAME =  envs.get('ALERTMANAGER_NAME')
-      msg = f"ALerting AHTUNG, alertmanager {ALERTMANAGER_NAME} don't work in last_successful time: {last_successful_alertmanager_request_time.value}, real time {current_time}"
-      send_message = bot.send_text(chat_id=chat_id, parse_mode=envs['parse_mode'], text=msg)
-      status = send_message.status_code
-      if status == 200:
-        msgs = 'Message successfully sent'
-        logger.info(msgs)
-      else:
-        msgs = 'Error dont sent to meesage vkteeams'  
-        logger.info(msgs)
-    time.sleep(time_interval_check_alert)
+    if redis_status == "on":
+      ## логика проверик значений из redis
+      current_time = time.time()
+      last_successful_alertmanager_request_time_redis = int(read_from_redis("time_last_heartbeat"))
+      time_since_last_request = current_time - last_successful_alertmanager_request_time_redis
+      if time_since_last_request > time_how_long_not_to_send:
+        chat_id = envs.get('default_chat_id')
+        ALERTMANAGER_NAME =  envs.get('ALERTMANAGER_NAME')
+        msg = f"ALerting AHTUNG, alertmanager {ALERTMANAGER_NAME} don't work in last_successful time: {last_successful_alertmanager_request_time_redis}, real time {current_time}"
+        send_message = bot.send_text(chat_id=chat_id, parse_mode=envs['parse_mode'], text=msg)
+        status = send_message.status_code
+        try:
+          if status == 200:
+            msgs = 'Message successfully sent'
+            logger.info(msgs)
+          else:
+            msgs = 'Error dont sent to meesage vkteeams'  
+            logger.info(msgs)
+        except web.HTTPException:
+            logger.error(format_exc())    
+      time.sleep(time_interval_check_alert)    
+    else:  
+      current_time = time.time()
+      time_since_last_request = current_time - last_successful_alertmanager_request_time.value
+      if time_since_last_request > time_how_long_not_to_send:
+        chat_id = envs.get('default_chat_id')
+        ALERTMANAGER_NAME =  envs.get('ALERTMANAGER_NAME')
+        msg = f"ALerting AHTUNG, alertmanager {ALERTMANAGER_NAME} don't work in last_successful time: {last_successful_alertmanager_request_time.value}, real time {current_time}"
+        send_message = bot.send_text(chat_id=chat_id, parse_mode=envs['parse_mode'], text=msg)
+        status = send_message.status_code
+        try:
+          if status == 200:
+            msgs = 'Message successfully sent'
+            logger.info(msgs)
+          else:
+            msgs = 'Error dont sent to meesage vkteeams'  
+            logger.info(msgs)
+        except web.HTTPException:
+            logger.error(format_exc())    
+      time.sleep(time_interval_check_alert)

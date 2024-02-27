@@ -17,16 +17,20 @@ fullnameOverride: ""
 args: {}
 
 envVars:
-  API_URL_BASE: https://api.xxx.xxx.ru/bot/v1/
+  API_URL_BASE: https://api.teams.sovcombank.ru/bot/v1/
   BOT_NAME: BOT_NAME
   default_chat_id: default_chat_id
   CHECK_ALERTMANAGER: "false"
   ALERTMANAGER_NAME: "YOU_NAME_CLUSTER"
   time_interval_check_alert: 60
   time_how_long_not_to_send: 300
+  redis_status: "on"
+  HOST_REDIS: "redis"
+
 
 envVarsSecret:
   API_TOKEN: API_TOKEN
+  REDIS_PASS: "sOmE_sEcUrE_pAsS"
 
 alertTemplate: |-
   {% if status is defined and status == 'firing' -%}

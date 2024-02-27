@@ -12,9 +12,11 @@ from jinja2 import Template
 from traceback import format_exc
 from argparse import ArgumentParser
 from pythonjsonlogger import jsonlogger
+from aiohttp_prometheus import metrics_middleware, MetricsView
 import src 
 
 CHECK_ALERTMANAGER=os.getenv('CHECK_ALERTMANAGER', "false").lower()
+
 
 def set_log_level(level):
     if level == 'INFO' or level == 'info':
@@ -179,10 +181,12 @@ for key, value in envs.items():
 bot = Bot(api_url_base=envs['api_url_base'], name=envs['bot_name'], token=envs['api_token'], is_myteam=True)
 
 app = web.Application()
+app.middlewares.append(metrics_middleware)
 app.add_routes([
     web.post('/api/v1/push', push_alert),
     web.get('/health', healthcheck),
-    web.post('/heartbeat', src.heartbeat)
+    web.post('/heartbeat', src.heartbeat),
+    web.get('/metrics', MetricsView)
   ])
 
 if __name__ == '__main__':

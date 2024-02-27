@@ -1,0 +1,1 @@
+# TODO add connect to vk message to bot 
